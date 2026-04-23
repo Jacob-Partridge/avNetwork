@@ -12,7 +12,7 @@ const int EMERGENCY_BUTTON_PIN = 2;
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int EMERGENCY_CAN_ID = 0x080;   // highest priority among your commands
+const unsigned int EMERGENCY_CAN_ID = 0;   // highest priority among your commands
 const byte EMERGENCY_ALERT_CMD = 0x01;
 
 // For button state tracking

@@ -13,7 +13,7 @@ const int CLOSE_BUTTON_PIN = 3;
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int CURTAIN_CAN_ID = 0x300;
+const unsigned int CURTAIN_CAN_ID = 3;
 
 // Data values for curtain commands
 const byte CURTAIN_OPEN_CMD  = 0x01;

@@ -13,7 +13,7 @@ const int LIGHT_OFF_BUTTON_PIN = 3;
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int LIGHT_CAN_ID = 0x100;
+const unsigned int LIGHT_CAN_ID = 1;
 
 // Data values for light commands
 const byte LIGHT_ON_CMD  = 0x01;

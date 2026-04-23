@@ -13,7 +13,7 @@ const int FAN_OFF_BUTTON_PIN = 3;
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int FAN_CAN_ID = 0x200;
+const unsigned int FAN_CAN_ID = 2;
 
 // Data values for fan commands
 const byte FAN_ON_CMD  = 0x01;
