@@ -5,15 +5,22 @@
 MCP_CAN CAN(9);   // CS pin for MCP2515
 
 // Simplified CAN IDs
-const unsigned int EMERGENCY_CAN_ID = 0;
-const unsigned int LIGHT_CAN_ID     = 1;
-const unsigned int FAN_CAN_ID       = 2;
-const unsigned int CURTAIN_CAN_ID   = 3;
+const unsigned int EMERGENCY_CAN_ID = 0x00;
+const unsigned int LIGHT_CAN_ID     = 0x01;
+const unsigned int FAN_CAN_ID       = 0x02;
+const unsigned int CURTAIN_CAN_ID   = 0x03;
 
+const unsigned int EMS_LED          = 9;
+const unsigned int LIGHT            = 10;
+const unsigned int CURTAIN          = 11;
+const unsigned int FAN              = 6;
 void setup()
 {
     Serial.begin(115200);
-
+    pinMode(6, OUTPUT);
+    pinMode(9, OUTPUT);
+    pinMode(10, OUTPUT);
+    pinMode(11, OUTPUT);
     while (CAN_OK != CAN.begin(CAN_125KBPS))
     {
         Serial.println("CAN init fail, retrying...");
@@ -22,7 +29,7 @@ void setup()
 
     Serial.println("CAN init ok!");
     Serial.println("Receiver ready.");
-}
+    }
 
 void loop()
 {
@@ -47,21 +54,20 @@ void loop()
 
         if (rxId == EMERGENCY_CAN_ID)
         {
-            if (len > 0 && buf[0] == 0x01)
-            {
-                Serial.println("EMERGENCY ALERT RECEIVED");
-            }
+            if (buf[0] == 0x01)
+                digitalWrite(EMS_LED, HIGH);
+            
+            else if (buf[0] == 0x00)
+                digitalWrite(EMS_LED, LOW);
         }
+
         else if (rxId == LIGHT_CAN_ID)
         {
             if (len > 0 && buf[0] == 0x01)
-            {
-                Serial.println("LIGHT ON");
-            }
+                digitalWrite(LIGHT, HIGH);
+
             else if (len > 0 && buf[0] == 0x00)
-            {
-                Serial.println("LIGHT OFF");
-            }
+                digitalWrite(LIGHT, LOW);
         }
         else if (rxId == FAN_CAN_ID)
         {
@@ -78,11 +84,11 @@ void loop()
         {
             if (len > 0 && buf[0] == 0x01)
             {
-                Serial.println("CURTAIN OPEN");
+                digitalWrite(CURTAIN, HIGH);
             }
             else if (len > 0 && buf[0] == 0x00)
             {
-                Serial.println("CURTAIN CLOSE");
+                digitalWrite(CURTAIN, LOW);
             }
         }
         else
