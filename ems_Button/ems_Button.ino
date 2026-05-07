@@ -7,27 +7,22 @@ MCP_CAN CAN(9);   // CS pin for MCP2515
 // ---------------------------
 // Pin setup
 // ---------------------------
-const int EMERGENCY_ON_BUTTON_PIN  = 3;
-const int EMERGENCY_OFF_BUTTON_PIN = 4;
+const int EMERGENCY_BUTTON_PIN = 2;
 
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int EMERGENCY_CAN_ID = 0x00;
-
-const byte EMERGENCY_ALERT_ON_CMD  = 0x01;
-const byte EMERGENCY_ALERT_OFF_CMD = 0x00;
+const unsigned int EMERGENCY_CAN_ID = 0;   // highest priority among your commands
+const byte EMERGENCY_ALERT_CMD = 0x01;
 
 // For button state tracking
-int lastEmergencyOnButtonState  = HIGH;
-int lastEmergencyOffButtonState = HIGH;
+int lastEmergencyButtonState = HIGH;
 
 void setup()
 {
     Serial.begin(115200);
 
-    pinMode(EMERGENCY_ON_BUTTON_PIN, INPUT_PULLUP);
-    pinMode(EMERGENCY_OFF_BUTTON_PIN, INPUT_PULLUP);
+    pinMode(EMERGENCY_BUTTON_PIN, INPUT_PULLUP);
 
     while (CAN_OK != CAN.begin(CAN_125KBPS))
     {
@@ -41,42 +36,32 @@ void setup()
 
 void loop()
 {
-    int emergencyOnButtonState  = digitalRead(EMERGENCY_ON_BUTTON_PIN);
-    int emergencyOffButtonState = digitalRead(EMERGENCY_OFF_BUTTON_PIN);
+    int emergencyButtonState = digitalRead(EMERGENCY_BUTTON_PIN);
 
-    // Send emergency ON
-    if (emergencyOnButtonState == LOW && lastEmergencyOnButtonState == HIGH)
+    // Send only when button is first pressed
+    if (emergencyButtonState == LOW && lastEmergencyButtonState == HIGH)
     {
-        sendEmergencyCommand(EMERGENCY_ALERT_ON_CMD);
-        Serial.println("Sent: EMERGENCY ON");
-        delay(200);
+        sendEmergencyAlert();
+        Serial.println("Sent: EMERGENCY ALERT");
+        delay(200);   // simple debounce
     }
 
-    // Send emergency OFF
-    if (emergencyOffButtonState == LOW && lastEmergencyOffButtonState == HIGH)
-    {
-        sendEmergencyCommand(EMERGENCY_ALERT_OFF_CMD);
-        Serial.println("Sent: EMERGENCY OFF");
-        delay(200);
-    }
-
-    lastEmergencyOnButtonState = emergencyOnButtonState;
-    lastEmergencyOffButtonState = emergencyOffButtonState;
+    lastEmergencyButtonState = emergencyButtonState;
 }
 
-void sendEmergencyCommand(byte command)
+void sendEmergencyAlert()
 {
     byte data[1];
-    data[0] = command;
+    data[0] = EMERGENCY_ALERT_CMD;
 
     byte sendResult = CAN.sendMsgBuf(EMERGENCY_CAN_ID, 0, 1, data);
 
     if (sendResult == CAN_OK)
     {
-        Serial.print("Message sent on CAN ID ");
-        Serial.print(EMERGENCY_CAN_ID);
+        Serial.print("Message sent on CAN ID 0x");
+        Serial.print(EMERGENCY_CAN_ID, HEX);
         Serial.print(" | Data: ");
-        Serial.println(data[0]);
+        Serial.println(data[0], HEX);
     }
     else
     {
