@@ -1,34 +1,23 @@
 #include <SPI.h>
 #include <mcp_can.h>
 #include <mcp_can_dfs.h>
+#include <DHT.h>
+#include <DHT_U.h>
 
-MCP_CAN CAN(9);   // CS pin for MCP2515
+MCP_CAN CAN(9);
 
-// ---------------------------
-// Pin setup
-// ---------------------------
-const int FAN_ON_BUTTON_PIN  = 2;
-const int FAN_OFF_BUTTON_PIN = 3;
+#define DHTPIN 4
+#define DHTTYPE DHT11
 
-// ---------------------------
-// CAN setup
-// ---------------------------
+DHT dht(DHTPIN, DHTTYPE);
+
 const unsigned int FAN_CAN_ID = 2;
-
-// Data values for fan commands
-const byte FAN_ON_CMD  = 0x01;
-const byte FAN_OFF_CMD = 0x00;
-
-// For button state tracking
-int lastFanOnButtonState  = HIGH;
-int lastFanOffButtonState = HIGH;
+const float TEMP_THRESHOLD_F = 78.0;
 
 void setup()
 {
     Serial.begin(115200);
-
-    pinMode(FAN_ON_BUTTON_PIN, INPUT_PULLUP);
-    pinMode(FAN_OFF_BUTTON_PIN, INPUT_PULLUP);
+    dht.begin();
 
     while (CAN_OK != CAN.begin(CAN_125KBPS))
     {
@@ -36,49 +25,50 @@ void setup()
         delay(100);
     }
 
-    Serial.println("CAN init ok!");
-    Serial.println("Fan sender ready.");
+    Serial.println("DHT11 continuous CAN sender ready.");
 }
 
 void loop()
 {
-    int fanOnButtonState  = digitalRead(FAN_ON_BUTTON_PIN);
-    int fanOffButtonState = digitalRead(FAN_OFF_BUTTON_PIN);
+    float tempF = dht.readTemperature(true);
 
-    if (fanOnButtonState == LOW && lastFanOnButtonState == HIGH)
+    if (isnan(tempF))
     {
-        sendFanCommand(FAN_ON_CMD);
-        Serial.println("Sent: FAN ON");
-        delay(200);
+        Serial.println("Failed to read from DHT11.");
+        delay(2000);
+        return;
     }
 
-    if (fanOffButtonState == LOW && lastFanOffButtonState == HIGH)
+    byte fanState;
+
+    if (tempF >= TEMP_THRESHOLD_F)
     {
-        sendFanCommand(FAN_OFF_CMD);
-        Serial.println("Sent: FAN OFF");
-        delay(200);
-    }
-
-    lastFanOnButtonState = fanOnButtonState;
-    lastFanOffButtonState = fanOffButtonState;
-}
-
-void sendFanCommand(byte command)
-{
-    byte data[1];
-    data[0] = command;
-
-    byte sendResult = CAN.sendMsgBuf(FAN_CAN_ID, 0, 1, data);
-
-    if (sendResult == CAN_OK)
-    {
-        Serial.print("Message sent on CAN ID 0x");
-        Serial.print(FAN_CAN_ID, HEX);
-        Serial.print(" | Data: ");
-        Serial.println(data[0], HEX);
+        fanState = 1;
     }
     else
     {
-        Serial.println("Error sending message.");
+        fanState = 0;
+    }
+
+    sendFanState(fanState);
+
+    Serial.print("Temp: ");
+    Serial.print(tempF);
+    Serial.print(" F | Sent fan state: ");
+    Serial.println(fanState);
+
+    delay(2000);
+}
+
+void sendFanState(byte state)
+{
+    byte data[1];
+    data[0] = state;
+
+    byte result = CAN.sendMsgBuf(FAN_CAN_ID, 0, 1, data);
+
+    if (result != CAN_OK)
+    {
+        Serial.println("Error sending CAN message.");
     }
 }

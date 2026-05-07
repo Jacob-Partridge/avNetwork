@@ -7,13 +7,13 @@ MCP_CAN CAN(9);   // CS pin for MCP2515
 // ---------------------------
 // Pin setup
 // ---------------------------
-const int LIGHT_ON_BUTTON_PIN  = 2;
-const int LIGHT_OFF_BUTTON_PIN = 3;
+const int LIGHT_ON_BUTTON_PIN  = 3;
+const int LIGHT_OFF_BUTTON_PIN = 6;
 
 // ---------------------------
 // CAN setup
 // ---------------------------
-const unsigned int LIGHT_CAN_ID = 1;
+const unsigned int LIGHT_CAN_ID = 0x01;
 
 // Data values for light commands
 const byte LIGHT_ON_CMD  = 0x01;
